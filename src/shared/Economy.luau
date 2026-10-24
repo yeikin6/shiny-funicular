@@ -5,6 +5,9 @@ local Config = require(script.Parent.Config)
 local Types = require(script.Parent.Types)
 
 type RarityId = Types.RarityId
+type MutationId = Types.MutationId
+type CelestialId = Types.CelestialId
+type StarInfo = Types.StarInfo
 
 local Economy = {}
 
@@ -29,10 +32,35 @@ function Economy.rebirthMultiplier(rebirths: number): number
 	return Config.Rebirth.multiplier ^ rebirths
 end
 
-function Economy.starRate(rarity: RarityId, ageSeconds: number, rebirths: number): number
-	local def = Config.RarityById[rarity]
+-- Producto de las mutaciones de tormenta y del rasgo celestial.
+function Economy.traitMultiplier(info: StarInfo): number
+	local multiplier = 1
+	for _, id: MutationId in info.mutations do
+		multiplier *= Config.MutationById[id].multiplier
+	end
+	local celestial: CelestialId? = info.celestial
+	if celestial then
+		multiplier *= Config.CelestialById[celestial].multiplier
+	end
+	return multiplier
+end
+
+function Economy.starRate(info: StarInfo, ageSeconds: number, rebirths: number): number
+	local def = Config.RarityById[info.rarity]
 	local level = Economy.maturityLevel(ageSeconds)
-	return def.baseRate * Config.Maturity.growthPerLevel ^ level * Economy.rebirthMultiplier(rebirths)
+	return def.baseRate
+		* Config.Maturity.growthPerLevel ^ level
+		* Economy.traitMultiplier(info)
+		* Economy.rebirthMultiplier(rebirths)
+end
+
+-- Agrega una mutación si la estrella no la tiene. Devuelve true si cambió.
+function Economy.addMutation(info: StarInfo, id: MutationId): boolean
+	if table.find(info.mutations, id) then
+		return false
+	end
+	table.insert(info.mutations, id)
+	return true
 end
 
 function Economy.rebirthCost(rebirths: number): number
@@ -72,6 +100,36 @@ function Economy.pickRarity(roll: number, pool: { RarityId }): RarityId
 		end
 	end
 	return pool[#pool]
+end
+
+function Economy.pickMutation(roll: number): MutationId
+	local total = 0
+	for _, def in Config.Mutations do
+		total += def.weight
+	end
+	local target = roll * total
+	for _, def in Config.Mutations do
+		target -= def.weight
+		if target < 0 then
+			return def.id
+		end
+	end
+	return Config.Mutations[#Config.Mutations].id
+end
+
+function Economy.pickCelestial(roll: number): CelestialId
+	local total = 0
+	for _, def in Config.Celestials do
+		total += def.weight
+	end
+	local target = roll * total
+	for _, def in Config.Celestials do
+		target -= def.weight
+		if target < 0 then
+			return def.id
+		end
+	end
+	return Config.Celestials[#Config.Celestials].id
 end
 
 return Economy

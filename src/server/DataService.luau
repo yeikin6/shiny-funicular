@@ -12,6 +12,7 @@ local Format = require(ReplicatedStorage.Shared.Format)
 local Types = require(ReplicatedStorage.Shared.Types)
 
 type PlayerData = Types.PlayerData
+type MutationId = Types.MutationId
 
 type SessionLock = { jobId: string, time: number }
 type Record = { data: PlayerData?, lock: SessionLock? }
@@ -55,6 +56,20 @@ local function defaultData(): PlayerData
 	}
 end
 
+-- Solo mutaciones conocidas y sin repetir.
+local function reconcileMutations(raw: any): { MutationId }
+	local result: { MutationId } = {}
+	if type(raw) ~= "table" then
+		return result
+	end
+	for _, id in raw do
+		if Config.MutationById[id] ~= nil and not table.find(result, id) then
+			table.insert(result, id)
+		end
+	end
+	return result
+end
+
 -- Completa campos faltantes de datos viejos o corruptos sin perder lo que haya.
 local function reconcile(raw: any): PlayerData
 	local data = defaultData()
@@ -86,6 +101,8 @@ local function reconcile(raw: any): PlayerData
 			then
 				data.slots[key] = {
 					rarity = star.rarity,
+					mutations = reconcileMutations(star.mutations),
+					celestial = if Config.CelestialById[star.celestial] ~= nil then star.celestial else nil,
 					placedAt = star.placedAt,
 					stored = if type(star.stored) == "number" then star.stored else 0,
 				}

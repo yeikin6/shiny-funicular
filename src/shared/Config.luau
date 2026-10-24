@@ -4,6 +4,10 @@ local Types = require(script.Parent.Types)
 
 type RarityDef = Types.RarityDef
 type RarityId = Types.RarityId
+type MutationDef = Types.MutationDef
+type MutationId = Types.MutationId
+type CelestialDef = Types.CelestialDef
+type CelestialId = Types.CelestialId
 
 local Rarities: { RarityDef } = {
 	{
@@ -68,6 +72,33 @@ for _, def in Rarities do
 	byId[def.id] = def
 end
 
+local Mutations: { MutationDef } = {
+	{ id = "Lluvia", displayName = "Lluvia", multiplier = 2, weight = 40, colorHex = "#6fb7ff" },
+	{ id = "Rayos", displayName = "Rayos", multiplier = 3, weight = 25, colorHex = "#fff35c" },
+	{ id = "Suerte", displayName = "Suerte", multiplier = 4, weight = 15, colorHex = "#5cff8a" },
+	{ id = "Volcan", displayName = "Volcán", multiplier = 4, weight = 15, colorHex = "#ff6a2b" },
+	{ id = "LluviaEstrellas", displayName = "Lluvia de estrellas", multiplier = 5, weight = 5, colorHex = "#ffffff" },
+}
+
+local mutationById: { [MutationId]: MutationDef } = {}
+for _, def in Mutations do
+	mutationById[def.id] = def
+end
+
+local Celestials: { CelestialDef } = {
+	{ id = "Nocturna", displayName = "Nocturna", multiplier = 6, weight = 45, colorHex = "#3b4cff" },
+	{ id = "Lunar", displayName = "Lunar", multiplier = 8, weight = 30, colorHex = "#cfe3ff" },
+	{ id = "Solar", displayName = "Solar", multiplier = 10, weight = 20, colorHex = "#ffcf3b" },
+	{ id = "Eclipse", displayName = "Eclipse", multiplier = 20, weight = 5, colorHex = "#9d2bff" },
+}
+
+local celestialById: { [CelestialId]: CelestialDef } = {}
+for _, def in Celestials do
+	celestialById[def.id] = def
+end
+
+local EventPool: { RarityId } = { "Rara", "Epica", "Legendaria" }
+
 -- El MVP solo hace caer estas tres; las otras quedan definidas para cuando haya contenido.
 local SpawnPool: { RarityId } = { "Comun", "Rara", "Epica" }
 
@@ -75,6 +106,27 @@ local Config = {
 	Rarities = Rarities,
 	RarityById = byId,
 	SpawnPool = SpawnPool,
+	Mutations = Mutations,
+	MutationById = mutationById,
+	Celestials = Celestials,
+	CelestialById = celestialById,
+
+	-- En Studio la espera entre tormentas y entre eventos es 10 veces más corta, para poder probarlos.
+	StudioTimeScale = 0.1,
+
+	Storms = {
+		interval = 240, -- segundos entre el fin de una tormenta y la siguiente
+		duration = 60,
+		rollEvery = 10, -- cada cuánto se tira la probabilidad sobre cada estrella colocada
+		chancePerRoll = 0.15, -- ~62% de mutar en una tormenta completa (6 tiradas)
+	},
+
+	Event = {
+		interval = 30 * 60,
+		duration = 90,
+		spawnInterval = 2,
+		pool = EventPool,
+	},
 
 	Spawn = {
 		interval = 8, -- segundos entre estrellas

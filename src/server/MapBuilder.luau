@@ -1,6 +1,7 @@
 --!strict
 -- Mapa gris generado por código: piso, cráter, parcelas con pedestales y tablero del leaderboard.
 -- Así el MVP no depende de nada armado a mano en Studio.
+local Lighting = game:GetService("Lighting")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 local Config = require(ReplicatedStorage.Shared.Config)
@@ -113,6 +114,48 @@ function MapBuilder.buildWorld(): Folder
 	crater.CanCollide = false
 
 	return folder
+end
+
+-- Noche con brillo: lo que más cambia el aspecto por menos trabajo en un juego de estrellas.
+-- Lighting.Technology no se puede setear por código: ponelo en Future desde Studio.
+function MapBuilder.setupLighting()
+	Lighting.ClockTime = 0
+	Lighting.Brightness = 1.5
+	Lighting.Ambient = Color3.fromRGB(40, 44, 70)
+	Lighting.OutdoorAmbient = Color3.fromRGB(70, 76, 120)
+	Lighting.EnvironmentDiffuseScale = 0.4
+	Lighting.EnvironmentSpecularScale = 0.6
+
+	local function ensure<T>(className: string, name: string): T
+		local existing = Lighting:FindFirstChild(name)
+		if existing then
+			existing:Destroy()
+		end
+		local created = Instance.new(className :: any)
+		created.Name = name
+		created.Parent = Lighting
+		return created :: any
+	end
+
+	local atmosphere: Atmosphere = ensure("Atmosphere", "Atmosphere")
+	atmosphere.Density = 0.3
+	atmosphere.Color = Color3.fromRGB(80, 90, 160)
+	atmosphere.Decay = Color3.fromRGB(30, 20, 60)
+	atmosphere.Glare = 0.2
+	atmosphere.Haze = 1.5
+
+	local bloom: BloomEffect = ensure("BloomEffect", "Bloom")
+	bloom.Intensity = 1.2
+	bloom.Size = 30
+	bloom.Threshold = 0.9
+
+	local color: ColorCorrectionEffect = ensure("ColorCorrectionEffect", "BaseColor")
+	color.Saturation = 0.15
+	color.Contrast = 0.1
+
+	local sky: Sky = ensure("Sky", "Sky")
+	sky.StarCount = 5000
+	sky.CelestialBodiesShown = true
 end
 
 function MapBuilder.buildPlot(index: number, parent: Instance): PlotParts

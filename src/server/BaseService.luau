@@ -10,10 +10,11 @@ local Remotes = require(ReplicatedStorage.Shared.Remotes)
 local Types = require(ReplicatedStorage.Shared.Types)
 local DataService = require(script.Parent.DataService)
 local MapBuilder = require(script.Parent.MapBuilder)
+local StarVisual = require(script.Parent.StarVisual)
 
 type PlayerData = Types.PlayerData
 type StarData = Types.StarData
-type RarityId = Types.RarityId
+type StarInfo = Types.StarInfo
 
 export type Plot = {
 	parts: MapBuilder.PlotParts,
@@ -47,26 +48,6 @@ local function setActive(prompt: ProximityPrompt, active: boolean, actionText: s
 	end
 end
 
-local function makeStarVisual(rarity: RarityId, cframe: CFrame, parent: Instance): BasePart
-	local def = Config.RarityById[rarity]
-	local star = Instance.new("Part")
-	star.Name = "Star"
-	star.Shape = Enum.PartType.Ball
-	star.Size = Vector3.one * def.size
-	star.Material = Enum.Material.Neon
-	star.Color = Color3.fromHex(def.colorHex)
-	star.Anchored = true
-	star.CanCollide = false
-	star.CanQuery = false
-	star.CFrame = cframe
-	local light = Instance.new("PointLight")
-	light.Color = star.Color
-	light.Range = 10
-	light.Parent = star
-	star.Parent = parent
-	return star
-end
-
 function BaseService.isDomeActive(plot: Plot): boolean
 	return now() < plot.domeUntil
 end
@@ -84,13 +65,14 @@ function BaseService.renderPlot(plot: Plot)
 
 		local visual: BasePart? = plot.visuals[index]
 		if star then
-			if visual and visual:GetAttribute("Rarity") ~= star.rarity then
+			if visual and visual:GetAttribute("VisualKey") ~= StarVisual.key(star) then
 				visual:Destroy()
 				visual = nil
 			end
 			if not visual then
-				local created = makeStarVisual(star.rarity, pedestal.starPoint, plot.parts.model)
-				created:SetAttribute("Rarity", star.rarity)
+				local created = StarVisual.make(star)
+				created.CFrame = pedestal.starPoint
+				created.Parent = plot.parts.model
 				plot.visuals[index] = created
 			end
 		elseif visual then
@@ -103,7 +85,9 @@ function BaseService.renderPlot(plot: Plot)
 		if data and star then
 			local level = Economy.maturityLevel(starAge(star))
 			local def = Config.RarityById[star.rarity]
-			pedestal.label.Text = `{def.displayName} Nv {level}\n{Format.number(star.stored)}`
+			local traits = StarVisual.traitText(star)
+			local header = if traits ~= "" then `{def.displayName} Nv {level}\n{traits}` else `{def.displayName} Nv {level}`
+			pedestal.label.Text = `{header}\n{Format.number(star.stored)}`
 			setActive(pedestal.ownerPrompt, true, "Cobrar " .. Format.number(star.stored))
 			setActive(pedestal.stealPrompt, not domeActive)
 		else
@@ -141,12 +125,18 @@ function BaseService.plotOf(player: Player): Plot?
 end
 
 -- Coloca una estrella en un pedestal propio vacío. ageSeconds es la madurez que trae.
-function BaseService.placeStar(player: Player, slotIndex: number, rarity: RarityId, ageSeconds: number): boolean
+function BaseService.placeStar(player: Player, slotIndex: number, info: StarInfo, ageSeconds: number): boolean
 	local data = DataService.get(player)
 	if not data or slotIndex > data.unlockedSlots or data.slots[slotKey(slotIndex)] then
 		return false
 	end
-	data.slots[slotKey(slotIndex)] = { rarity = rarity, placedAt = os.time() - ageSeconds, stored = 0 }
+	data.slots[slotKey(slotIndex)] = {
+		rarity = info.rarity,
+		mutations = table.clone(info.mutations),
+		celestial = info.celestial,
+		placedAt = os.time() - ageSeconds,
+		stored = 0,
+	}
 	BaseService.renderPlayer(player)
 	return true
 end
@@ -166,8 +156,8 @@ function BaseService.collect(player: Player, slotIndex: number)
 end
 
 -- Saca la estrella de un pedestal ajeno. Lo acumulado se le cobra a la víctima, no al ladrón.
--- Devuelve la rareza y la edad original; el que roba aplica la penalidad de madurez.
-function BaseService.takeStar(plot: Plot, slotIndex: number): (RarityId?, number)
+-- Devuelve la estrella y su edad original; el que roba aplica la penalidad de madurez.
+function BaseService.takeStar(plot: Plot, slotIndex: number): (StarInfo?, number)
 	local owner = plot.owner
 	local data = if owner then DataService.get(owner) else nil
 	if not owner or not data then
@@ -183,7 +173,19 @@ function BaseService.takeStar(plot: Plot, slotIndex: number): (RarityId?, number
 	data.runEarned += star.stored
 	DataService.publish(owner)
 	BaseService.renderPlot(plot)
-	return star.rarity, starAge(star)
+	return { rarity = star.rarity, mutations = star.mutations, celestial = star.celestial }, starAge(star)
+end
+
+-- Recorre las estrellas colocadas de los jugadores conectados (las tormentas solo pegan online).
+function BaseService.forEachPlacedStar(callback: (Plot, StarData) -> ())
+	for player, plot in plotByPlayer do
+		local data = DataService.get(player)
+		if data then
+			for _, star in data.slots do
+				callback(plot, star)
+			end
+		end
+	end
 end
 
 -- Saca todas las estrellas (rebirth).
@@ -209,7 +211,7 @@ local function applyOfflineIncome(data: PlayerData)
 		return
 	end
 	for _, star in data.slots do
-		star.stored += Economy.starRate(star.rarity, starAge(star), data.rebirths) * seconds
+		star.stored += Economy.starRate(star, starAge(star), data.rebirths) * seconds
 	end
 end
 
@@ -306,7 +308,7 @@ local function tick(dt: number)
 		if data then
 			local total = 0
 			for _, star in data.slots do
-				local rate = Economy.starRate(star.rarity, starAge(star), data.rebirths)
+				local rate = Economy.starRate(star, starAge(star), data.rebirths)
 				star.stored += rate * dt
 				total += rate
 			end
