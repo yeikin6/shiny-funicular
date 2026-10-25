@@ -7,13 +7,16 @@ local BaseService = require(script.Parent.BaseService)
 local StarService = require(script.Parent.StarService)
 local RebirthService = require(script.Parent.RebirthService)
 local LeaderboardService = require(script.Parent.LeaderboardService)
+local WeatherService = require(script.Parent.WeatherService)
 
 local world = MapBuilder.buildWorld()
+MapBuilder.setupLighting()
 local board = MapBuilder.buildBoard(world)
 
 BaseService.init(world)
 StarService.init(world)
 RebirthService.init()
 LeaderboardService.init(board)
+WeatherService.init()
 -- Último: recién ahora empiezan a cargar jugadores, con todos los callbacks registrados.
 DataService.init()

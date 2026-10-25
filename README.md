@@ -33,6 +33,9 @@ Todo esto va en la **terminal** (PowerShell), no en Studio.
 
 - Para que se guarde el progreso: Home → Game Settings → Security → activá **Enable Studio Access to API Services** (antes tenés que publicar el place con File → Publish to Roblox). Si no lo activás, igual se puede jugar, pero no se guarda nada.
 - Game Settings → Places → **Max Players: 6**, porque hay 6 parcelas por servidor.
+- En el Explorer, seleccioná **Lighting** y en Properties poné **Technology: Future**. El resto de la iluminación nocturna la arma el código.
+
+En Studio la espera entre tormentas es de 24 s y la espera entre eventos de 3 min, para poder probarlos. En el juego publicado son 4 y 30 min.
 
 ## Dónde está cada cosa
 
