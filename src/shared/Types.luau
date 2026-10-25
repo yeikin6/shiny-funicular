@@ -31,6 +31,7 @@ export type RarityDef = {
 	weight: number, -- peso relativo de caída
 	baseRate: number, -- Polvo/s a nivel 0 y 0 rebirths
 	carrySpeed: number, -- multiplicador de WalkSpeed al cargarla
+	kg: number, -- peso; por ahora solo se muestra, la mochila llega en v0.3
 	size: number, -- diámetro en studs
 	minRadius: number, -- las raras caen más lejos del centro del cráter
 	maxRadius: number,

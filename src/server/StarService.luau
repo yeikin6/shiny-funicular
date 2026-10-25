@@ -31,12 +31,6 @@ local worldStarCount = 0
 local carries: { [Player]: Carry } = {}
 local eventActive = false
 
-local function displayName(info: StarInfo): string
-	local name = Config.RarityById[info.rarity].displayName
-	local traits = StarVisual.traitText(info)
-	return if traits ~= "" then `{name} · {traits}` else name
-end
-
 local function getRoot(player: Player): (BasePart?, Humanoid?)
 	local character = player.Character
 	if not character then
@@ -94,6 +88,7 @@ local function attachCarry(player: Player, info: StarInfo, age: number): boolean
 	local star = StarVisual.make(info)
 	star.Name = "CarriedStar"
 	weldTo(star, root, CFrame.new(0, 4.5, 0))
+	StarVisual.addInfoLabel(star, info)
 	star.Parent = character
 
 	-- Columna de luz: todo el mapa ve quién lleva algo valioso.
@@ -110,7 +105,7 @@ local function attachCarry(player: Player, info: StarInfo, age: number): boolean
 
 	humanoid.WalkSpeed = Config.Carry.baseWalkSpeed * def.carrySpeed
 	carries[player] = { info = info, age = age, pickedAt = os.clock(), parts = { star, column } }
-	player:SetAttribute("Carrying", displayName(info))
+	player:SetAttribute("Carrying", StarVisual.displayName(info))
 	return true
 end
 
@@ -119,10 +114,11 @@ local function spawnWorldStar(info: StarInfo, position: Vector3, age: number, li
 	local star = StarVisual.make(info)
 	star.Name = "Star_" .. info.rarity
 	star.CFrame = CFrame.new(position.X, def.size / 2 + 0.5, position.Z)
+	StarVisual.addInfoLabel(star, info)
 
 	local prompt = Instance.new("ProximityPrompt")
 	prompt.ActionText = "Agarrar"
-	prompt.ObjectText = displayName(info)
+	prompt.ObjectText = StarVisual.displayName(info)
 	prompt.HoldDuration = 0
 	prompt.MaxActivationDistance = 8
 	prompt.RequiresLineOfSight = false

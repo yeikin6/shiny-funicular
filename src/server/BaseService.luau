@@ -87,7 +87,8 @@ function BaseService.renderPlot(plot: Plot)
 			local def = Config.RarityById[star.rarity]
 			local traits = StarVisual.traitText(star)
 			local header = if traits ~= "" then `{def.displayName} Nv {level}\n{traits}` else `{def.displayName} Nv {level}`
-			pedestal.label.Text = `{header}\n{Format.number(star.stored)}`
+			local rate = Economy.starRate(star, starAge(star), data.rebirths)
+			pedestal.label.Text = `{header}\n{Format.number(rate)}/s · {Format.number(star.stored)}`
 			setActive(pedestal.ownerPrompt, true, "Cobrar " .. Format.number(star.stored))
 			setActive(pedestal.stealPrompt, not domeActive)
 		else

@@ -4,6 +4,8 @@
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 local Config = require(ReplicatedStorage.Shared.Config)
+local Economy = require(ReplicatedStorage.Shared.Economy)
+local Format = require(ReplicatedStorage.Shared.Format)
 local Types = require(ReplicatedStorage.Shared.Types)
 
 type StarInfo = Types.StarInfo
@@ -28,6 +30,46 @@ function StarVisual.traitText(info: StarInfo): string
 		table.insert(names, Config.MutationById[id].displayName)
 	end
 	return table.concat(names, " · ")
+end
+
+-- "Épica · Eclipse" arriba, "25 kg · 1.2K/s base" abajo.
+function StarVisual.displayName(info: StarInfo): string
+	local name = Config.RarityById[info.rarity].displayName
+	local traits = StarVisual.traitText(info)
+	return if traits ~= "" then `{name} · {traits}` else name
+end
+
+-- Cartel flotante con nombre, peso e ingreso base (ya multiplicado por mutaciones y rasgo).
+function StarVisual.addInfoLabel(part: BasePart, info: StarInfo)
+	local def = Config.RarityById[info.rarity]
+	local gui = Instance.new("BillboardGui")
+	gui.Name = "Info"
+	gui.Size = UDim2.fromOffset(200, 44)
+	gui.StudsOffset = Vector3.new(0, def.size / 2 + 1.8, 0)
+	gui.MaxDistance = 60
+	gui.LightInfluence = 0
+	gui.Parent = part
+
+	local title = Instance.new("TextLabel")
+	title.Size = UDim2.new(1, 0, 0.55, 0)
+	title.BackgroundTransparency = 1
+	title.TextColor3 = part.Color
+	title.TextStrokeTransparency = 0.3
+	title.TextScaled = true
+	title.Font = Enum.Font.GothamBold
+	title.Text = StarVisual.displayName(info)
+	title.Parent = gui
+
+	local stats = Instance.new("TextLabel")
+	stats.Position = UDim2.fromScale(0, 0.55)
+	stats.Size = UDim2.new(1, 0, 0.45, 0)
+	stats.BackgroundTransparency = 1
+	stats.TextColor3 = Color3.new(1, 1, 1)
+	stats.TextStrokeTransparency = 0.3
+	stats.TextScaled = true
+	stats.Font = Enum.Font.GothamMedium
+	stats.Text = `{def.kg} kg · {Format.number(Economy.baseStarRate(info))}/s base`
+	stats.Parent = gui
 end
 
 function StarVisual.make(info: StarInfo): Part

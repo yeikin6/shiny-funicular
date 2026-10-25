@@ -18,7 +18,8 @@ local Rarities: { RarityDef } = {
 		carrySpeed = 1.0,
 		size = 2,
 		minRadius = 0,
-		maxRadius = 40,
+		maxRadius = 30,
+		kg = 5,
 		colorHex = "#d9e4ff",
 	},
 	{
@@ -26,10 +27,11 @@ local Rarities: { RarityDef } = {
 		displayName = "Rara",
 		weight = 22,
 		baseRate = 8,
-		carrySpeed = 0.9,
+		carrySpeed = 0.95,
 		size = 2.5,
-		minRadius = 15,
-		maxRadius = 55,
+		minRadius = 10,
+		maxRadius = 40,
+		kg = 12,
 		colorHex = "#4fa3ff",
 	},
 	{
@@ -37,10 +39,11 @@ local Rarities: { RarityDef } = {
 		displayName = "Épica",
 		weight = 6,
 		baseRate = 60,
-		carrySpeed = 0.8,
+		carrySpeed = 0.9,
 		size = 3,
-		minRadius = 30,
-		maxRadius = 65,
+		minRadius = 20,
+		maxRadius = 48,
+		kg = 25,
 		colorHex = "#b45cff",
 	},
 	{
@@ -48,10 +51,11 @@ local Rarities: { RarityDef } = {
 		displayName = "Legendaria",
 		weight = 1.8,
 		baseRate = 500,
-		carrySpeed = 0.7,
+		carrySpeed = 0.85,
 		size = 3.5,
-		minRadius = 40,
-		maxRadius = 70,
+		minRadius = 28,
+		maxRadius = 52,
+		kg = 50,
 		colorHex = "#ffb020",
 	},
 	{
@@ -59,10 +63,11 @@ local Rarities: { RarityDef } = {
 		displayName = "Mítica",
 		weight = 0.2,
 		baseRate = 4000,
-		carrySpeed = 0.6,
+		carrySpeed = 0.8,
 		size = 4,
-		minRadius = 50,
-		maxRadius = 75,
+		minRadius = 35,
+		maxRadius = 54,
+		kg = 100,
 		colorHex = "#ff4f8b",
 	},
 }
@@ -129,7 +134,7 @@ local Config = {
 	},
 
 	Spawn = {
-		interval = 8, -- segundos entre estrellas
+		interval = 5, -- segundos entre estrellas
 		warning = 2, -- segundos de aviso antes de que caiga
 		lifetime = 30, -- segundos que una estrella queda en el piso
 		maxInWorld = 12,
@@ -162,7 +167,7 @@ local Config = {
 	},
 
 	Carry = {
-		baseWalkSpeed = 16,
+		baseWalkSpeed = 22,
 		knockRadius = 4, -- si otro jugador se acerca a menos de esto, soltás la estrella
 		pickupGrace = 1.5, -- segundos de inmunidad al agarrar
 	},
@@ -192,8 +197,8 @@ local Config = {
 
 	World = {
 		plotCount = 6,
-		plotRadius = 150, -- distancia del centro del cráter a cada parcela
-		craterRadius = 80,
+		plotRadius = 95, -- distancia del centro del cráter a cada parcela
+		craterRadius = 55,
 	},
 }
 

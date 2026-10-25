@@ -45,6 +45,11 @@ function Economy.traitMultiplier(info: StarInfo): number
 	return multiplier
 end
 
+-- Lo que se muestra como "base": rareza por mutaciones y rasgo celestial, sin madurez ni rebirths.
+function Economy.baseStarRate(info: StarInfo): number
+	return Config.RarityById[info.rarity].baseRate * Economy.traitMultiplier(info)
+end
+
 function Economy.starRate(info: StarInfo, ageSeconds: number, rebirths: number): number
 	local def = Config.RarityById[info.rarity]
 	local level = Economy.maturityLevel(ageSeconds)
